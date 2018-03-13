@@ -1,25 +1,32 @@
-default: dump dv rm
+# Makefile for CS 4513 Project 1
 
-dump.o: dump.c
-	gcc -c dump.c -o dump.o
+FLAGS = -g -Wall
 
-dump: dump.o
-	gcc dump.o -o dump
+all: rm dv dump
 
-dv.o: dv.c
-	gcc -c dv.c -o dv.o
+# RM
+rm : rm.o
+	$(CC) rm.o -o rm
+	
+rm.o : rm.c
+	$(CC) $(FLAGS) -c rm.c -o rm.o
+	
+# DV
+dv : dv.o
+	$(CC) dv.o -o dv
 
-dv: dv.o
-	gcc dv.o -o dv
+dv.o : dv.c
+	$(CC) $(FLAGS) -c dv.c -o dv.o
 
-rm.o: rm.c
-	gcc -c rm.c -o rm.o
+# DUMP
+dump : dump.o
+	$(CC) dump.o -o dump
 
-rm: rm.o
-	gcc rm.o -o rm
+dump.o : dump.c
+	$(CC) $(FLAGS) -c dump.c -o dump.o
 
+docs:
+	doxygen
+	
 clean:
-	-rm -f *.o
-	-rm -f dump
-	-rm -f rm
-	-rm -f dv
+	rm *.o rm dv dump

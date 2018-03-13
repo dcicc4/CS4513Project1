@@ -1,59 +1,125 @@
+/**
+ * rm.c
+ * A replacement utility for file removal that puts removed files into a dumpster
+ *
+ * @author 	Tanuj Sane
+ * @since	3/12/2018
+ * @version 1.0
+ *
+ * Changelog:
+ * - 1.0 Initial commit
+ */
+ 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <stdarg.h>
 #include <sys/stat.h>
 
-int moveFile(const char* file, struct stat* fileStat);
-int main(int argc, const char* argv[]){
-	int i = 1;
-	int fileCounter = 0;
-	int optionCounter = 0;
-  const char** files = (const char**) malloc((argc-1)*sizeof(char*));
-	const char** options = (const char**)malloc(3*sizeof(char*));
-	struct stat** stats = (struct stat**)malloc((argc-1)*sizeof (struct stat*));
-	//loop to seperate files from options
-	for (i; i<argc; i++){
-		int length = strlen(argv[i]);
-		if(argv[i][0]== '-' && length==2){
-			options[optionCounter]=  argv[i];
-			optionCounter++;
-		}else{
-			struct stat* fileStat = (struct stat*) malloc(sizeof(struct stat));
-			if (stat(argv[i], fileStat) == -1){
-				printf("error! invalid filepath:  %s \n", argv[i]);
-			}else{
-				stats[fileCounter] = fileStat;
-				files[fileCounter] =  argv[i];
-				printf("%ld \n",fileStat->st_size);
-				fileCounter++;
-			}
+#define MAX_FILENAME_SIZE 	128
+#define STAT				struct stat
+
+/** Print the error message and exit */
+void fail(char* message) {
+	fprintf(stderr, message);
+	fprintf(stderr, "\n");
+	exit(EXIT_FAILURE);
+}
+
+/** Print the help and exit */
+void help(char* my_name) {
+	printf("Usage: %s [-rfh] [-d dumpster] file1 [file2 ...]\n", my_name);
+	printf("  -r Remove directories recursively\n");
+	printf("  -f Force removal without backing up to the dumpster\n");
+	printf("  -d Specify a dumpster directory\n");
+	printf("  -h Display this help and exit\n");
+	exit(EXIT_FAILURE);
+}
+
+/**
+ * A function to allocate and build a file path from the given parts
+ * 
+ * @param count The number of strings to use
+ */
+char* build_path(int count, ...) {
+	/* Initialize the variadic parameters */
+	va_list size_pass, build_pass; 
+	va_start(size_pass, count); va_start(build_pass, count);	
+	
+	/* Make the size pass to get the necessary size of the final buffer */
+	int i; int path_size = 0;
+	for(i = 0; i < count; i++) {
+		/* Increment the size of the return, +1 for the slash */
+		path_size += strlen(va_arg(size_pass, char*)) + 1;
+	}
+	va_end(size_pass);
+	
+	/* Create the path buffer and add in the first part */
+	char* path = (char*)calloc(path_size, sizeof(char)); 
+	strcpy(path, va_arg(build_pass, char*));
+	for(i = 1; i < count; i++) {
+		strcat(path, "/");
+		strcat(path, va_arg(build_pass, char*));
+	}
+	va_end(build_pass);
+	
+	return path;
+}
+
+/**
+ * 
+ */
+void move_file(const char* old, const char* new) {
+	/* Access file information */
+	STAT* metadata = (STAT*) malloc(sizeof(STAT));
+	if(stat(old, metadata) == -1) {
+		printf("%s is an invalid filepath, ignoring...\n", old);
+		return;
+	}
+	
+	/* Attempt the move, and handle the errors if not */
+	if(rename(old, new) != 0) fail(strerror(errno));
+}
+
+/** MAIN */
+int main(int argc, char** argv) {
+	/* Verify and parse commandline arguments */
+	if(argc < 2) help(argv[0]);
+	
+	/* Set up configuration from commandline flags */
+	opterr = 0;	
+	char* dumpster = NULL;
+	char opt; int recursive = 0, force = 0;
+	while((opt = getopt(argc, argv, "rfhd:")) != -1) {
+		switch(opt) {
+			case 'r': recursive = 1; break;
+			case 'f': force = 1; break;
+			case 'd': dumpster = optarg; break;
+			case 'h': help(argv[0]); break;
+				
+			/* This happens if an unexpected argument shows up */
+			case '?':
+				/* If the argument was -d, the argument was left out */
+				if(optopt == 'd') fail("Must specify a dumpster directory with the -d option");
+				else printf("Unrecognized option -%c, ignoring...\n", optopt);
+				break;
 		}
 	}
-	//TODO handle optional CMD Line options
-	for (i =0; i< fileCounter; i++){
-		moveFile(files[i], stats[i]);
+	
+	/* Grab the DUMPSTER environment variable and fail out if not set */
+	if(dumpster == NULL) dumpster = getenv("DUMPSTER");
+	if(dumpster == NULL) fail("Dumpster directory not found; set the DUMPSTER environment variable or specify a dumpster with -d");
+	
+	/* For each specified file, it's trash day! */
+	int i;
+	for(i = optind; i < argc; i++) {
+		/* Create the path for the dumpstered file */
+		char* dumped_path = build_path(2, dumpster, argv[i]);
+		move_file(argv[i], dumped_path);
 	}
-}
-	/**
-Properties of stat
-	st_mode 	The current permissions on the file.
-	st_ino 		The inode for the file (note that this number is unique to all files and directories on a Linux System.
-	st_dev 		The device that the file currently resides on.
-	st_uid 		The User ID for the file.
-	st_gid 		The Group ID for the file.
-	st_atime 	The most recent time that the file was accessed.
-	st_ctime 	The most recent time that the file's permissions were changed.
-	st_mtime 	The most recent time that the file's contents were modified.
-	st_nlink 	The number of links that there are to this file.
-	st_size 	The size in bytes
-*/
-
-//Moves file to dumpster
-int moveFile(const char* file, struct stat* fileStat){
-	const char[] dumpsterLocation = "dumpster/";//TODO replace with path provide by enviromental variable DUMPSTER
-	strcat(dumpsterLocation,file);
-	//TODO add check for existing files and add ".1", ".2"... or print error message if ".9" exists
-	//TODO use Stat to set permissions, access time, and maybe modified time
-	//TODO use st_dev in stat to determine if rename will work (must be the same as dumpsterLocation), if it wont work use copy and unlink
-	rename(file,dumpsterLocation);
+	
+	return EXIT_SUCCESS;
 }
