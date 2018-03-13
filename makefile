@@ -1,4 +1,4 @@
-default: dump rm dv
+default: dump dv rm
 
 dump.o: dump.c
 	gcc -c dump.c -o dump.o
@@ -6,20 +6,20 @@ dump.o: dump.c
 dump: dump.o
 	gcc dump.o -o dump
 
-rm.o: rm.c
-	gcc -c rm.c -o rmp.o
-
-rm: rm.o
-	gcc rm.o -o rm
-
 dv.o: dv.c
 	gcc -c dv.c -o dv.o
 
 dv: dv.o
-	gcc dv.o -o rm
+	gcc dv.o -o dv
 
-clean: 
+rm.o: rm.c
+	gcc -c rm.c -o rm.o
+
+rm: rm.o
+	gcc rm.o -o rm
+
+clean:
 	-rm -f *.o
-	-rm -f dump 
-	-rm -f rm 
+	-rm -f dump
+	-rm -f rm
 	-rm -f dv
