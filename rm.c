@@ -69,19 +69,29 @@ char* build_path(int count, ...) {
 	return path;
 }
 
+
 /**
  * 
  */
-void move_file(const char* old, const char* new) {
+void move_file(const char* old, const char* new, int force, int recursive) {
 	/* Access file information */
-	STAT* metadata = (STAT*) malloc(sizeof(STAT));
-	if(stat(old, metadata) == -1) {
+	STAT metadata;
+	if(stat(old, &metadata) == -1) {
 		printf("%s is an invalid filepath, ignoring...\n", old);
+		return;
+	}
+
+	if(S_ISDIR(metadata.st_mode) != 0 && recursive == 0){
+		printf("%s is a directory so the -r option must be used \n", old);
 		return;
 	}
 	
 	/* Attempt the move, and handle the errors if not */
-	if(rename(old, new) != 0) fail(strerror(errno));
+	if (force == 0){
+		if(rename(old, new) != 0) fail(strerror(errno));
+	} else{
+		if(remove(old) != 0) fail(strerror(errno));
+	}
 }
 
 /** MAIN */
@@ -108,6 +118,7 @@ int main(int argc, char** argv) {
 				break;
 		}
 	}
+
 	
 	/* Grab the DUMPSTER environment variable and fail out if not set */
 	if(dumpster == NULL) dumpster = getenv("DUMPSTER");
@@ -118,7 +129,7 @@ int main(int argc, char** argv) {
 	for(i = optind; i < argc; i++) {
 		/* Create the path for the dumpstered file */
 		char* dumped_path = build_path(2, dumpster, argv[i]);
-		move_file(argv[i], dumped_path);
+		move_file(argv[i], dumped_path, force, recursive);
 	}
 	
 	return EXIT_SUCCESS;
