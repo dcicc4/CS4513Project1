@@ -9,7 +9,7 @@
  * Changelog:
  * - 1.0 Initial commit
  */
- 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -55,15 +55,15 @@ int try(char* tag, int retval) {
 
 /**
  * A function to allocate and build a file path from the given parts, using "/" as the separator
- * 
+ *
  * @param count The number of strings to use
  * @param ...	The strings, as char arrays, to compose into a path
  */
 char* build_path(int count, ...) {
 	/* Initialize the variadic parameters */
-	va_list size_pass, build_pass; 
-	va_start(size_pass, count); va_start(build_pass, count);	
-	
+	va_list size_pass, build_pass;
+	va_start(size_pass, count); va_start(build_pass, count);
+
 	/* Make the size pass to get the necessary size of the final buffer */
 	int i; int path_size = 0;
 	for(i = 0; i < count; i++) {
@@ -71,16 +71,16 @@ char* build_path(int count, ...) {
 		path_size += strlen(va_arg(size_pass, char*)) + 1;
 	}
 	va_end(size_pass);
-	
+
 	/* Create the path buffer and add in the parts */
-	char* path = (char*)calloc(path_size, sizeof(char)); 
+	char* path = (char*)calloc(path_size, sizeof(char));
 	strcpy(path, va_arg(build_pass, char*));
 	for(i = 1; i < count; i++) {
 		strcat(path, "/");
 		strcat(path, va_arg(build_pass, char*));
 	}
 	va_end(build_pass);
-	
+
 	return path;
 }
 
@@ -92,11 +92,11 @@ char* build_path(int count, ...) {
  *
  * @return The file descriptor of the new copied file
  */
-int copy_file(const char* from, const char* to) {	
+int copy_file(const char* from, const char* to) {
 	/* Open/create both files */
 	int fd_from = try("copy_file.open(from)", open(from, O_RDONLY));
 	int fd_to = try("copy_file.open(to)", open(to, O_WRONLY | O_CREAT));
-	
+
 	/* Read bytes from the from file and put them in the to file */
 	char buffer[BLOCK_SIZE]; int read_bytes = 0;
 	do {
@@ -104,10 +104,10 @@ int copy_file(const char* from, const char* to) {
 		try("copy_file.write(to)", write(fd_to, buffer, read_bytes));
 	}
 	while(read_bytes > 0);
-	
+
 	/* Free the file descriptor for the from file */
 	close(fd_from);
-	
+
 	return fd_to;
 }
 
@@ -129,14 +129,32 @@ void move_file(const char* old, const char* new, int recursive) {
 		printf("%s is an invalid filepath, ignoring...\n", old);
 		return;
 	}
-	
+
 	/* Make sure directories are recursively moved */
 	int is_directory = S_ISDIR(metadata.st_mode);
 	if(is_directory && !recursive) {
 		printf("%s is a directory (allow recursive removal with -r), ignoring...\n", old);
 		return;
 	}
-	
+  //Puts with a .1... extention
+  if(access(new,F_OK)!=-1){
+    int extCount = 0;
+    char* tempPath = malloc(strlen(new)+sizeof(char)*3);
+    strcpy(tempPath, new);
+    strcat(tempPath, ".1");
+  	while(access(tempPath, F_OK)!=-1 && extCount <10){
+      extCount++;
+      tempPath[strlen(tempPath)-1] =  extCount+'0';
+    }
+    if(extCount >9){
+      char* message = malloc(strlen(new)+sizeof(char)*45);
+      sprintf(message, "dumpster is has too many versions of a file: %s", old );
+      fail("move_file.exists", message);
+    }
+    new = tempPath;
+  }
+
+
 	/* Attempt the move, and handle the errors if not */
 	if(rename(old, new) != 0) {
 		switch(errno) {
@@ -144,42 +162,42 @@ void move_file(const char* old, const char* new, int recursive) {
 			case EXDEV:
 				if(is_directory) {
 					try("move_file.rename().EXDEV.mkdir(new)", mkdir(new, metadata.st_mode));
-					
-					DIR* dp = opendir(old); 
+
+					DIR* dp = opendir(old);
 					if(dp == NULL) fail("move_file.rename(old,new)->EXDEV.opendir(old)", "Failed to open directory");
-					
+
 					DirEnt* d;
 					do {
 						d = readdir(dp);
-						
+
 						/* Ignore the special files . and .. */
 						if(!strcmp(d->d_name, ".") || !strcmp(d->d_name, "..")) continue;
-						
+
 						/* Generate the names for the files within the dir and recursively move them */
 						char* old_new = build_path(2, old, d->d_name);
 						char* new_new = build_path(2, new, d->d_name);
 						move_file(old_new, new_new, recursive);
-						
+
 					}
 					while(d);
 				}
 				else {
 					copy_file(old, new);
-					
+
 					/* Set the mod and access times to match the old file */
 					UTime times; times.actime = metadata.st_atime; times.modtime = metadata.st_mtime;
 					try("move_file.rename(old,new)->EXDEV.utime", utime(new, &times));
-					
+
 					/* Set the permissions to match the old file */
 					Mode ugo = metadata.st_mode;
 					try("move_file.rename(old,new)->EXDEV.chmod", chmod(new, ugo));
-					
+
 					/* Remove the old file */
 					try("remove the old file", remove(old));
 				}
-				
+
 				break;
-				
+
 			/* Otherwise just give up and fail out*/
 			default: try("move_file.rename(old,new)", -1); break;
 		}
@@ -190,9 +208,9 @@ void move_file(const char* old, const char* new, int recursive) {
 int main(int argc, char** argv) {
 	/* Verify and parse commandline arguments */
 	if(argc < 2) help(argv[0]);
-	
+
 	/* Set up configuration from commandline flags */
-	opterr = 0;	
+	opterr = 0;
 	char* dumpster = NULL;
 	char opt; int recursive = 0, force = 0;
 	while((opt = getopt(argc, argv, "rfhd:")) != -1) {
@@ -201,7 +219,7 @@ int main(int argc, char** argv) {
 			case 'f': force = 1; break;
 			case 'd': dumpster = optarg; break;
 			case 'h': help(argv[0]); break;
-				
+
 			/* This happens if an unexpected argument shows up */
 			case '?':
 				/* If the argument was -d, the argument was left out */
@@ -211,23 +229,23 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	
+
 	/* Grab the DUMPSTER environment variable and fail out if not set */
 	if(dumpster == NULL) dumpster = getenv("DUMPSTER");
 	if(dumpster == NULL) fail("main.getenv()", "Dumpster directory not found; set the DUMPSTER environment variable or specify a dumpster with -d");
-	
+
 	/* For each specified file, it's trash day! */
 	int i;
 	for(i = optind; i < argc; i++) {
 		/* Create the path for the dumpstered file */
 		char* dumped_path = build_path(2, dumpster, argv[i]);
-		
+
 		/* For forced removal, just delete the file */
 		if(force) try("main.remove()", remove(argv[i]));
-		
+
 		/* Otherwise move the file to the dumpster */
 		else move_file(argv[i], dumped_path, recursive);
 	}
-	
+
 	return EXIT_SUCCESS;
 }
