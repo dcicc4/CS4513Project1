@@ -1,2 +1,2 @@
-export DUMPSTER=$PWD/dumpster
+export DUMPSTER="$PWD/dumpster"
 echo "Set dumpster to $DUMPSTER"

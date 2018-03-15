@@ -24,8 +24,7 @@
 
 /** Print the error message and exit */
 void fail(char* message) {
-	fprintf(stderr, message);
-	fprintf(stderr, "\n");
+	fprintf(stderr, "%s\n", message);
 	exit(EXIT_FAILURE);
 }
 
