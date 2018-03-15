@@ -29,4 +29,4 @@ docs:
 	doxygen
 	
 clean:
-	rm *.o rm dv dump
+	/bin/rm *.o rm dv dump
