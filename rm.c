@@ -24,7 +24,6 @@
 #define Stat				struct stat
 #define UTime				struct utimbuf
 #define Mode				__mode_t
-
 #define DirEnt				struct dirent
 
 #define BLOCK_SIZE			4096
@@ -71,7 +70,7 @@ char* build_path(int count, ...) {
 		path_size += strlen(va_arg(size_pass, char*)) + 1;
 	}
 	va_end(size_pass);
-
+	
 	/* Create the path buffer and add in the parts */
 	char* path = (char*)calloc(path_size, sizeof(char));
 	strcpy(path, va_arg(build_pass, char*));
@@ -122,7 +121,6 @@ int copy_file(const char* from, const char* to) {
  * @param recursive		Flag indicating whether the use specified -r
  */
 void move_file(const char* old, const char* new, int recursive) {
-	printf("----------\n%s\n%s\n----------\n", old, new);
 	/* Access file information */
 	Stat metadata;
 	if(stat(old, &metadata) == -1) {
@@ -136,24 +134,25 @@ void move_file(const char* old, const char* new, int recursive) {
 		printf("%s is a directory (allow recursive removal with -r), ignoring...\n", old);
 		return;
 	}
-  //Puts with a .1... extention
-  if(access(new,F_OK)!=-1){
-    int extCount = 0;
-    char* tempPath = malloc(strlen(new)+sizeof(char)*3);
-    strcpy(tempPath, new);
-    strcat(tempPath, ".1");
-  	while(access(tempPath, F_OK)!=-1 && extCount <10){
-      extCount++;
-      tempPath[strlen(tempPath)-1] =  extCount+'0';
-    }
-    if(extCount >9){
-      char* message = malloc(strlen(new)+sizeof(char)*45);
-      sprintf(message, "dumpster is has too many versions of a file: %s", old );
-      fail("move_file.exists", message);
-    }
-    new = tempPath;
-  }
-
+	
+	/* Check for an extension counter */
+	int worked = access(new, F_OK), cp_counter = 0;
+	char* temp_new = malloc(strlen(new) + 3 * sizeof(char));
+	strcpy(temp_new, new);
+	while(worked == 0) {
+		if(++cp_counter > 9) {
+			printf("%s has too many versions in the dumpster, ignoring...\n", old);
+			return;
+		}
+		
+		/* Add the counter extension and test */
+		strcpy(temp_new, new);
+		temp_new[strlen(new)] = '.';
+		temp_new[strlen(new) + 1] = '0' + cp_counter;
+		temp_new[strlen(new) + 2] = '\0';
+		
+		worked = access(temp_new, F_OK);
+	}
 
 	/* Attempt the move, and handle the errors if not */
 	if(rename(old, new) != 0) {
@@ -166,20 +165,26 @@ void move_file(const char* old, const char* new, int recursive) {
 					DIR* dp = opendir(old);
 					if(dp == NULL) fail("move_file.rename(old,new)->EXDEV.opendir(old)", "Failed to open directory");
 
-					DirEnt* d;
-					do {
-						d = readdir(dp);
-
-						/* Ignore the special files . and .. */
-						if(!strcmp(d->d_name, ".") || !strcmp(d->d_name, "..")) continue;
-
+					DirEnt* d = readdir(dp);
+					while(d) {
+						if(strcmp(d->d_name, ".") == 0 || strcmp(d->d_name, "..") == 0) {
+							d = readdir(dp);
+							continue;
+						}
+						
 						/* Generate the names for the files within the dir and recursively move them */
 						char* old_new = build_path(2, old, d->d_name);
 						char* new_new = build_path(2, new, d->d_name);
+						printf("--\n%s\n%s\n--\n", old_new, new_new);
 						move_file(old_new, new_new, recursive);
-
+						
+						d = readdir(dp);
 					}
-					while(d);
+					
+					/* Deallocate and remove directory */
+					closedir(dp);
+					rmdir(old);
+					
 				}
 				else {
 					copy_file(old, new);
