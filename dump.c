@@ -52,18 +52,23 @@ char* build_path(int count, ...) {
 }
 
 
-void dump_file(const char* dump_path){
+
+void dump_all(const char* dump_path){
 	DIR *dump;
 	dump = opendir(dump_path);
 	struct dirent *dump_file;
 	char* file_path;
 	while ((dump_file = readdir(dump)) != NULL){
 		//printf("found %s, %d, %d\n",dump_file->d_name,dump_file->d_type,strcmp(dump_file->d_name,".."));
-		if(dump_file->d_type == DT_REG || dump_file->d_type == DT_DIR){
-			if(strcmp(dump_file->d_name,"..") != 0 && strcmp(dump_file->d_name,".") != 0){
-				file_path = build_path(2, dump_path, dump_file->d_name);
+		file_path = build_path(2, dump_path, dump_file->d_name);
+		if(dump_file->d_type == DT_REG){
 				if(remove(file_path) != 0) fail(strerror(errno));
 				printf("deleted %s\n",dump_file->d_name);
+		} else if(dump_file->d_type == DT_DIR){
+			if(strcmp(dump_file->d_name,"..") != 0 && strcmp(dump_file->d_name,".") != 0){
+				dump_all(file_path);
+				if(remove(file_path) != 0) fail(strerror(errno));
+				printf("deleted directory %s\n",dump_file->d_name);
 			}
 		}
 	}
@@ -92,6 +97,6 @@ int main(int argc, char** argv){
 	if(dumpster == NULL) dumpster = getenv("DUMPSTER");
 	if(dumpster == NULL) fail("Dumpster directory not found; set the DUMPSTER environment variable or specify a dumpster with -d");
 	
-	dump_file(dumpster);
+	dump_all(dumpster);
 	return EXIT_SUCCESS;
 }

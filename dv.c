@@ -12,7 +12,6 @@
 #define Stat				struct stat
 #define UTime				struct utimbuf
 #define Mode				__mode_t
-
 #define DirEnt				struct dirent
 
 #define BLOCK_SIZE			4096
@@ -28,7 +27,6 @@ int try(char* tag, int retval) {
 	if(retval < 0) fail(tag, strerror(errno));
 	return retval;
 }
-
 
 /** Print the help and exit */
 void help(char* my_name) {
