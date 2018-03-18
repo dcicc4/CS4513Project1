@@ -121,7 +121,11 @@ void move_file(const char* old, const char* new, int recursive) {
 		printf("%s is a directory (allow recursive removal with -r), ignoring...\n", old);
 		return;
 	}
-
+	if(access(new,F_OK)!=-1){
+		char* message = malloc(strlen(new)+sizeof(char)*45);
+		sprintf(message, "file already exists: %s", old );
+		fail("move_file.exists", message);
+	}
 	/* Attempt the move, and handle the errors if not */
 	if(rename(old, new) != 0) {
 		switch(errno) {
@@ -204,7 +208,7 @@ void move_file(const char* old, const char* new, int recursive) {
 			char* dumped_path = build_path(2, dumpster, argv[i]);
 
 			/* Move the from the dumpster */
-			move_file( dumped_path, argv[i], 0);
+			move_file( dumped_path, argv[i], 1);
 		}
 
 		return EXIT_SUCCESS;
