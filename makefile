@@ -4,27 +4,35 @@ FLAGS = -g -Wall
 
 all: rm dv dump
 
+# UTILTIES
+util.o : util.c
+	$(CC) -c util.c -o util.o
+
+futil.o : futil.c
+	$(CC) -c futil.c -o futil.o
+
 # RM
-rm : rm.o
-	$(CC) rm.o -o rm
+rm : rm.o util.o futil.o
+	$(CC) rm.o util.o futil.o -o rm
 	
 rm.o : rm.c
 	$(CC) $(FLAGS) -c rm.c -o rm.o
 	
 # DV
-dv : dv.o
-	$(CC) dv.o -o dv
+dv : dv.o util.o futil.o
+	$(CC) dv.o util.o futil.o -o dv
 
 dv.o : dv.c
 	$(CC) $(FLAGS) -c dv.c -o dv.o
 
 # DUMP
-dump : dump.o
-	$(CC) dump.o -o dump
+dump : dump.o util.o
+	$(CC) dump.o util.o -o dump
 
 dump.o : dump.c
 	$(CC) $(FLAGS) -c dump.c -o dump.o
 
+# DOCS AND CLEANUP
 docs:
 	doxygen
 	
