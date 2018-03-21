@@ -2,7 +2,7 @@
  * dv.c
  * A utility for restoring files from the dumpster
  *
- * @author 	[TODO]
+ * @author 	Drew Ciccarelli
  * @since	3/12/2018
  * @version 1.0
  *
