@@ -2,5 +2,6 @@
 rm
 dv
 dump
+experiments
 test*
 dumpster/
