@@ -16,7 +16,7 @@
 #include "util.h"
 #include "futil.h"
 #include "export.h"
- 
+
 #define TimeVal struct timeval
 
 const char* testing_directory = "testing_directory";
@@ -30,7 +30,7 @@ char test_file[] = "00.txt";
 void setup() {
 	try(mkdir(testing_directory, 0755));
 	int i;
-	for(i = 1; i < 20 + 1; i++) {
+	for(i = 1; i < 21; i++) {
 		test_file[0] = '0' + (i / 10);
 		test_file[1] = '0' + (i % 10);
 		open(build_path(2, testing_directory, test_file), O_CREAT, 0555);
@@ -50,49 +50,55 @@ double get_time() {
 
 double time_rename() {
 	setup();
-	
+
 	/* Run 20 renaming operations and collect the values */
 	int i; double sum = 0; char moved_file[] = "00.csv";
-	for(i = 1; i < 20 + 1; i++) {
-		double start = get_time();
-		
+	for(i = 1; i < 21; i++) {
+
 		test_file[0] = '0' + (i / 10); moved_file[0] = '0' + (i / 10);
 		test_file[1] = '0' + (i % 10); moved_file[1] = '0' + (i % 10);
-		
-		rename(build_path(2, testing_directory, test_file), build_path(2, testing_directory, moved_file));
+    char* firstPath = build_path(2, testing_directory, test_file);
+    char* secondPath =  build_path(2, testing_directory, moved_file);
+
+    sync();
+    double start = get_time();
+
+		rename(firstPath,secondPath);
+
 		sync();
-		
 		double end = get_time();
 		sum += (end - start);
 	}
-	
+
 	teardown();
-	
+
 	return sum / 19.0;
 }
 
 double time_link_unlink() {
 	setup();
-	
+
 	/* Run 20 renaming operations and collect the values */
 	int i; double sum = 0; char moved_file[] = "00.csv";
-	for(i = 1; i < 20 + 1; i++) {
-		double start = get_time();
-		
+	for(i = 1; i < 21; i++) {
+
 		test_file[0] = '0' + (i / 10); moved_file[0] = '0' + (i / 10);
 		test_file[1] = '0' + (i % 10); moved_file[1] = '0' + (i % 10);
-		
-		char* old = build_path(2, testing_directory, test_file);
-		link(old, build_path(2, testing_directory, moved_file));
+    char* old = build_path(2, testing_directory, test_file);
+    char* new =  build_path(2, testing_directory, moved_file);
+    sync();
+    double start = get_time();
+
+    link(old, new);
 		unlink(old);
+
 		sync();
-		
 		double end = get_time();
 		sum += (end - start);
 	}
-	
+
 	teardown();
-	
+
 	return sum / 19.0;
 }
 
@@ -100,7 +106,7 @@ double time_copy_file() {
 	srand(time(NULL));
 	char* original = build_path(2, separate_fs_dir, "original.txt");
 	const long original_size = 395366699;
-	
+
 	/* Open the file and populate with garbage */
 	int fd_from = try(open(original, O_WRONLY | O_CREAT));
 	long i; char contents[original_size];
@@ -109,36 +115,20 @@ double time_copy_file() {
 	}
 	try(write(fd_from, contents, original_size));
 	sync();
-	
+
 	/* Copy the file */
 	double start = get_time();
 	copy_file(original, "copy.txt");
 	double end = get_time();
 	sync();
-	
+
 	/* Get the size of the file */
 	Stat metadata; try(stat("copy.txt", &metadata));
 	double file_size = metadata.st_size;
-	
+
 	return file_size / (end - start);
 }
 
-/**
-Times renaming a test file
-*/
-double timeRename(){
-  TimeVal* startTime= (TimeVal*) malloc(sizeof(TimeVal));
-  TimeVal* endTime= (TimeVal*) malloc(sizeof(TimeVal));
-  open("test1", O_CREAT);
-  sync();
-  gettimeofday(startTime, NULL);
-  
-  sync();
-  gettimeofday(endTime, NULL);
-  double diff = ((double)endTime->tv_sec +((double)endTime->tv_usec)/1000000)- ((double)startTime->tv_sec+ ((double)startTime->tv_usec)/1000000);
-  //printf("%f",diff );
-  return diff;
-}
 
 
 /**
@@ -186,7 +176,6 @@ int main(){
   }
   total= total/20;
   printf("\n Average Time for Rename: %f seconds", total);*/
-	
 	printf("Average Time for Rename: %f seconds\n", time_rename());
 	printf("Average Time for Link + Unlink: %f seconds\n", time_link_unlink());
 	printf("Copying Throughput: %f bps\n", time_copy_file());
