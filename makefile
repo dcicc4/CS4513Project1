@@ -52,4 +52,4 @@ docs:
 	doxygen
 
 clean:
-	/bin/rm -f *.o rm dv dump experiments
+	/bin/rm -f *.o *.a rm dv dump experiments

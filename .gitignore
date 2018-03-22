@@ -1,4 +1,5 @@
 *.o
+*.a
 rm
 dv
 dump
