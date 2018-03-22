@@ -24,3 +24,10 @@ Use the make exp command to compile our experiment code.
 Use exp to run our tests
 
 Use make clean to remove all .o and executible files
+
+
+dv.c, dump.c, rm.c and experiments.c contain the code for their respective commands
+
+util.c contains utility functions such as try and fail that are used by all of our executables.
+
+futil.c contains file utility functions necessary for all commands except experiments.c 
