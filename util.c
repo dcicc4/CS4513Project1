@@ -13,8 +13,8 @@
 #include "util.h"
 
 /** Print the error message and exit */
-void fail(char* message) {
-	fprintf(stderr, "[%s:%d]: %s\n", __FILE__, __LINE__, message);
+void fail_base(char* message, char* file, int line) {
+	fprintf(stderr, "[%s:%d]: %s\n", file, line, message);
 	exit(EXIT_FAILURE);
 }
 

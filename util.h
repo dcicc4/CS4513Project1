@@ -31,7 +31,10 @@
 #define Mode				__mode_t
 #define DirEnt				struct dirent
 
-void fail(char* message);
+
+#define fail(msg) fail_base(msg, __FILE__, __LINE__)
+void fail_base(char* message, char* file, int line);
+
 int try(int retval);
 char* build_path(int count, ...);
 

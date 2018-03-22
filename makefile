@@ -2,7 +2,12 @@
 
 FLAGS = -g -Wall
 
-all: rm dv dump experiments
+default: clean
+default: rm dv dump
+
+exp: clean
+exp: FLAGS = -g -Wall -DAS_LIB
+exp: rm.o dv.o dump.o experiments
 
 # UTILTIES
 util.o : util.c
@@ -32,9 +37,12 @@ dump : dump.o util.o
 dump.o : dump.c
 	$(CC) $(FLAGS) -c dump.c -o dump.o
 
-# experiments
-experiments: experiments.o util.o
-	$(CC) experiments.o util.o -o experiments
+# EXPERIMENTS
+export.a : rm.o dv.o dump.o util.o futil.o
+	ar -cvq export.a rm.o dv.o dump.o util.o futil.o
+
+experiments: experiments.o export.a
+	$(CC) experiments.o export.a -o experiments
 
 experiments.o: experiments.c
 	$(CC) $(FLAGS) -c experiments.c -o experiments.o
@@ -44,4 +52,4 @@ docs:
 	doxygen
 
 clean:
-	/bin/rm *.o rm dv dump experiments
+	/bin/rm -f *.o rm dv dump experiments

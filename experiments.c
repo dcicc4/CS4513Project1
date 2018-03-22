@@ -1,16 +1,22 @@
 /**
- * tests.c
+ * experiments.c
  * Test for the program
  *
- * @author 	Drew Ciccarelli
+ * @author 	Drew Ciccarelli, Tanuj Sane
  * @since	3/12/2018
  * @version 1.0
  *
+ * Changelog:
+ * - 1.0 Initial commit
  */
- #include "util.h"
- #include <sys/time.h>
-#define BLOCK_SIZE 	4096
- #define TimeVal struct timeval
+
+#include <sys/time.h>
+
+#include "util.h"
+#include "futil.h"
+#include "export.h"
+ 
+#define TimeVal struct timeval
 
 
 /**
@@ -67,16 +73,17 @@ int time_copy_file(const char* from, const char* to) {
 
 	return bps;
 }
-/**
-*/
+
+/** MAIN */
 int main(){
-  double total = 0;
+  /*double total = 0;
   for (int i =0; i < 20; i++){
     total+=timeRename();
-    
   }
   total= total/20;
-  printf("\n Average Time for Rename: %f seconds", total);
-
-
+  printf("\n Average Time for Rename: %f seconds", total);*/
+	
+	char* dumpster = getenv("DUMPSTER");
+	char* test_files[] = {"1.txt", "2.txt"};
+	rm(2, test_files, 0, 0, dumpster);
 }

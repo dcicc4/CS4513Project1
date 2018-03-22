@@ -12,9 +12,32 @@
 
 #include "util.h"
 #include "futil.h"
+#include "export.h"
 
-#define BLOCK_SIZE			4096
+/**
+ * The file removal funtion containing all arguments, implemented like this so that the functionality can be exported to the timing code
+ *
+ * @param nfiles	The number of files to be dumped
+ * @param filenames	The array of filenames to be dumped
+ * @param recursive	Flag indicating whether files should be removed recursively
+ * @param force		Flag indicating whether files should be removed rather than dumped
+ * @param dumpster	The path to the dumpster
+ */
+void rm(int nfiles, char** filenames, int recursive, int force, char* dumpster) {
+	int i;
+	for(i = 0; i < nfiles; i++) {
+		/* Create the path for the dumpstered file */
+		char* dumped_path = build_path(2, dumpster, filenames[i]);
 
+		/* For forced removal, just delete the file */
+		if(force) try(remove(filenames[i]));
+
+		/* Otherwise move the file to the dumpster */
+		else move_file(filenames[i], dumped_path, recursive, EXTEND);
+	}
+}
+
+#ifndef AS_LIB
 /** Print the help and exit */
 void help(char* my_name) {
 	printf("--------------- CS 4513 Project 1 - rm ---------------\n");
@@ -57,17 +80,8 @@ int main(int argc, char** argv) {
 	if(dumpster == NULL) fail("Dumpster directory not found; set the DUMPSTER environment variable or specify a dumpster with -d");
 
 	/* For each specified file, it's trash day! */
-	int i;
-	for(i = optind; i < argc; i++) {
-		/* Create the path for the dumpstered file */
-		char* dumped_path = build_path(2, dumpster, argv[i]);
-
-		/* For forced removal, just delete the file */
-		if(force) try(remove(argv[i]));
-
-		/* Otherwise move the file to the dumpster */
-		else move_file(argv[i], dumped_path, recursive, EXTEND);
-	}
+	rm(argc - optind, argv + optind, recursive, force, dumpster);
 
 	return EXIT_SUCCESS;
 }
+#endif

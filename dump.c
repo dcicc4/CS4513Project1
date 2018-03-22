@@ -11,7 +11,32 @@
  */
 
 #include "util.h"
+#include "export.h"
 
+/**
+ * The file restoration funtion containing all arguments, implemented like this so that the functionality can be exported to the timing code
+ *
+ * @param dumpster	The path to the dumpster
+ */
+void dump(const char* dumpster){
+	DIR *trash; trash = opendir(dumpster);
+	DirEnt *dump_file;
+	char* file_path;
+	
+	while ((dump_file = readdir(trash)) != NULL){
+		file_path = build_path(2, dumpster, dump_file->d_name);
+		
+		if(dump_file->d_type == DT_REG) try(remove(file_path));
+		else if(dump_file->d_type == DT_DIR){
+			if(strcmp(dump_file->d_name,"..") != 0 && strcmp(dump_file->d_name,".") != 0){
+				dump(file_path);
+				try(remove(file_path));
+			}
+		}
+	}
+}
+
+#ifndef AS_LIB
 /** Print the help and exit */
 void help(char* my_name) {
 	printf("-------------- CS 4513 Project 1 - dump --------------\n");
@@ -22,28 +47,7 @@ void help(char* my_name) {
 	exit(EXIT_FAILURE);
 }
 
-/**
- * A function to delete all files and directories from the given path
- *
- * @param dump_path	The path to the dumpster directory from which all files will be deleted
- */
-void dump_all(const char* dump_path){
-	DIR *dump;
-	dump = opendir(dump_path);
-	DirEnt *dump_file;
-	char* file_path;
-	while ((dump_file = readdir(dump)) != NULL){
-		file_path = build_path(2, dump_path, dump_file->d_name);
-		if(dump_file->d_type == DT_REG) try(remove(file_path));
-		else if(dump_file->d_type == DT_DIR){
-			if(strcmp(dump_file->d_name,"..") != 0 && strcmp(dump_file->d_name,".") != 0){
-				dump_all(file_path);
-				try(remove(file_path));
-			}
-		}
-	}
-}
-
+/** MAIN */
 int main(int argc, char** argv){
 	/* Set up configuration from commandline flags */
 	opterr = 0;	
@@ -66,6 +70,7 @@ int main(int argc, char** argv){
 	if(dumpster == NULL) dumpster = getenv("DUMPSTER");
 	if(dumpster == NULL) fail("Dumpster directory not found; set the DUMPSTER environment variable or specify a dumpster with -d");
 	
-	dump_all(dumpster);
+	dump(dumpster);
 	return EXIT_SUCCESS;
 }
+#endif
