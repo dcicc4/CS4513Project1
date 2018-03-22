@@ -39,7 +39,7 @@ int copy_file(const char* from, const char* to) {
 
 	return fd_to;
 }
-	
+
 /**
  * Move the given file, taking into consideration various cases:
  * - Files on the same filesystem are just moved as is
@@ -65,13 +65,13 @@ void move_file(const char* old, const char* new, int recursive, int extend) {
 		printf("%s is a directory (allow recursive removal with -r), ignoring...\n", old);
 		return;
 	}
-	
-	int worked = access(new, F_OK); 
+
+	int worked = access(new, F_OK);
 	if(!extend && worked == 0) {
 		printf("%s already exists here, ignoring...\n", old);
 		return;
-	}	
-	
+	}
+
 	/* Create the extended filename */
 	int cp_counter = 0;
 	char* temp_new = malloc(strlen(new) + 3 * sizeof(char));
@@ -81,16 +81,16 @@ void move_file(const char* old, const char* new, int recursive, int extend) {
 			printf("%s has too many versions in the dumpster, ignoring...\n", old);
 			return;
 		}
-		
+
 		/* Add the counter extension and test */
 		strcpy(temp_new, new);
 		temp_new[strlen(new)] = '.';
 		temp_new[strlen(new) + 1] = '0' + cp_counter;
 		temp_new[strlen(new) + 2] = '\0';
-		
+
 		worked = access(temp_new, F_OK);
 	}
-	
+
 	/* Reassign the new pointer to the extended filename */
 	new = temp_new;
 
@@ -111,32 +111,33 @@ void move_file(const char* old, const char* new, int recursive, int extend) {
 							d = readdir(dp);
 							continue;
 						}
-						
+
 						/* Generate the names for the files within the dir and recursively move them */
 						char* old_new = build_path(2, old, d->d_name);
 						char* new_new = build_path(2, new, d->d_name);
 						move_file(old_new, new_new, recursive, extend);
-						
+
 						d = readdir(dp);
 					}
-					
+
 					/* Deallocate and remove directory */
 					closedir(dp); rmdir(old);
-					
+
 				}
 				else {
 					copy_file(old, new);
 
-					/* Set the mod and access times to match the old file */
-					UTime times; times.actime = metadata.st_atime; times.modtime = metadata.st_mtime;
-					try(utime(new, &times));
-
-					/* Set the permissions to match the old file */
-					try(chmod(new, metadata.st_mode));
-
-					/* Remove the old file */
-					try(remove(old));
 				}
+				
+				/* Set the mod and access times to match the old file */
+				UTime times; times.actime = metadata.st_atime; times.modtime = metadata.st_mtime;
+				try(utime(new, &times));
+
+				/* Set the permissions to match the old file */
+				try(chmod(new, metadata.st_mode));
+
+				/* Remove the old file */
+				try(remove(old));
 				break;
 
 			/* Otherwise just give up and fail out*/
