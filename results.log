@@ -1,0 +1,66 @@
+Rename 1: 0.045052
+Rename 2: 0.004059
+Rename 3: 0.004361
+Rename 4: 0.003953
+Rename 5: 0.003922
+Rename 6: 0.004585
+Rename 7: 0.004268
+Rename 8: 0.003999
+Rename 9: 0.004238
+Rename 10: 0.004254
+Rename 11: 0.099524
+Rename 12: 0.007582
+Rename 13: 0.008496
+Rename 14: 0.004279
+Rename 15: 0.003958
+Rename 16: 0.004238
+Rename 17: 0.004270
+Rename 18: 0.004079
+Rename 19: 0.003969
+Rename 20: 0.004342
+Average Time for Rename: 0.011371 seconds
+
+Link + Unlink 1: 0.005489
+Link + Unlink 2: 0.004597
+Link + Unlink 3: 0.004336
+Link + Unlink 4: 0.004428
+Link + Unlink 5: 0.003943
+Link + Unlink 6: 0.004252
+Link + Unlink 7: 0.004285
+Link + Unlink 8: 0.003886
+Link + Unlink 9: 0.004390
+Link + Unlink 10: 0.004907
+Link + Unlink 11: 0.004260
+Link + Unlink 12: 0.004404
+Link + Unlink 13: 0.004357
+Link + Unlink 14: 0.004339
+Link + Unlink 15: 0.003875
+Link + Unlink 16: 0.004297
+Link + Unlink 17: 0.004315
+Link + Unlink 18: 0.004494
+Link + Unlink 19: 0.004437
+Link + Unlink 20: 0.004328
+Average Time for Link + Unlink: 0.004381 seconds
+
+1: Copied 4096000 bytes in 0.337417 seconds
+2: Copied 4096000 bytes in 0.362265 seconds
+3: Copied 4096000 bytes in 0.291032 seconds
+4: Copied 4096000 bytes in 0.275486 seconds
+5: Copied 4096000 bytes in 0.273877 seconds
+6: Copied 4096000 bytes in 0.353469 seconds
+7: Copied 4096000 bytes in 0.275376 seconds
+8: Copied 4096000 bytes in 0.317458 seconds
+9: Copied 4096000 bytes in 0.284589 seconds
+10: Copied 4096000 bytes in 0.224995 seconds
+11: Copied 4096000 bytes in 0.156491 seconds
+12: Copied 4096000 bytes in 0.226714 seconds
+13: Copied 4096000 bytes in 0.164419 seconds
+14: Copied 4096000 bytes in 0.327374 seconds
+15: Copied 4096000 bytes in 0.328389 seconds
+16: Copied 4096000 bytes in 0.276539 seconds
+17: Copied 4096000 bytes in 0.179282 seconds
+18: Copied 4096000 bytes in 0.259557 seconds
+19: Copied 4096000 bytes in 0.185045 seconds
+20: Copied 4096000 bytes in 0.177472 seconds
+Copying Throughput: 2560000.000000 bps
+

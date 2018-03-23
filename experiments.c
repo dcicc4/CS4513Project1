@@ -22,7 +22,7 @@
 const char* testing_directory = "testing_directory";
 // TODO: This is specfic to Tanuj's machine with a flash drive mounted to that location, need to make not dependent on this
 const char* separate_fs_dir = "/mnt/usb";
-char test_file[] = "00.txt";
+char test_file[] = "00.test";
 
 /**
  * Set up a testing directory with 20 text files
@@ -52,18 +52,17 @@ double time_rename() {
 	setup();
 
 	/* Run 20 renaming operations and collect the values */
-	int i; double sum = 0; char moved_file[] = "00.csv";
+	int i; double sum = 0; char moved_file[] = "00.t3st";
 	for(i = 1; i < 21; i++) {
 		test_file[0] = '0' + (i / 10); moved_file[0] = '0' + (i / 10);
 		test_file[1] = '0' + (i % 10); moved_file[1] = '0' + (i % 10);
-    char* firstPath = build_path(2, testing_directory, test_file);
-    char* secondPath =  build_path(2, testing_directory, moved_file);
-
-    sync();
-    double start = get_time();
-
+    
+		char* firstPath = build_path(2, testing_directory, test_file);
+    	char* secondPath =  build_path(2, testing_directory, moved_file);
+    	sync();
+    	
+		double start = get_time();
 		rename(firstPath,secondPath);
-
 		sync();
 		double end = get_time();
 		double total = end - start;
@@ -73,26 +72,25 @@ double time_rename() {
 
 	teardown();
 
-	return sum / 19.0;
+	return sum / 20.0;
 }
 
 double time_link_unlink() {
 	setup();
 
-	/* Run 20 renaming operations and collect the values */
+	/* Run 20 link + unlink operations and collect the values */
 	int i; double sum = 0; char moved_file[] = "00.csv";
 	for(i = 1; i < 21; i++) {
-
 		test_file[0] = '0' + (i / 10); moved_file[0] = '0' + (i / 10);
 		test_file[1] = '0' + (i % 10); moved_file[1] = '0' + (i % 10);
-    char* old = build_path(2, testing_directory, test_file);
-    char* new =  build_path(2, testing_directory, moved_file);
-    sync();
-    double start = get_time();
-
-    link(old, new);
+    	
+		char* old = build_path(2, testing_directory, test_file);
+    	char* new =  build_path(2, testing_directory, moved_file);
+    	sync();
+    
+		double start = get_time();
+    	link(old, new);
 		unlink(old);
-
 		sync();
 		double end = get_time();
 		double total = end - start;
@@ -102,13 +100,15 @@ double time_link_unlink() {
 
 	teardown();
 
-	return sum / 19.0;
+	return sum / 20.0;
 }
 
 double time_copy_file() {
+	try(mkdir(testing_directory, 0755));
+	
 	srand(time(NULL));
-	char* original = build_path(2, separate_fs_dir, "original.txt");
-	const long original_size = 395366699;
+	char* original = build_path(2, separate_fs_dir, "original.test");
+	const long original_size = 1000 * BLOCK_SIZE;
 
 	/* Open the file and populate with garbage */
 	int fd_from = try(open(original, O_WRONLY | O_CREAT));
@@ -120,16 +120,32 @@ double time_copy_file() {
 	sync();
 
 	/* Copy the file */
-	double start = get_time();
-	copy_file(original, "copy.txt");
-	double end = get_time();
-	sync();
+	int sum;
+	for(i = 1; i < 21; i++) { 
+		test_file[0] = '0' + (i / 10);
+		test_file[1] = '0' + (i % 10);
+		
+		double start = get_time();
+		copy_file(original, test_file);
+		sync();
+		double end = get_time();
+		
+		/* Get the size of the file */
+		Stat metadata; try(stat(test_file, &metadata));
+		long file_size = metadata.st_size;
+		
+		/* Grab data for successful copies */
+		if(file_size == original_size){
+			printf("%lu: Copied %lu bytes in %f seconds\n", i, file_size, end - start);
+			sum += (end - start);
+		}
+	}
 
-	/* Get the size of the file */
-	Stat metadata; try(stat("copy.txt", &metadata));
-	double file_size = metadata.st_size;
-
-	return file_size / (end - start);
+	double time_avg = sum / 20.0;
+	
+	teardown();
+	
+	return ((double) original_size) / time_avg;
 }
 
 
@@ -179,7 +195,7 @@ int main(){
   }
   total= total/20;
   printf("\n Average Time for Rename: %f seconds", total);*/
-	printf("Average Time for Rename: %f seconds\n", time_rename());
-	printf("Average Time for Link + Unlink: %f seconds\n", time_link_unlink());
-	printf("Copying Throughput: %f bps\n", time_copy_file());
+	printf("Average Time for Rename: %f seconds\n\n", time_rename());
+	printf("Average Time for Link + Unlink: %f seconds\n\n", time_link_unlink());
+	printf("Copying Throughput: %f bps\n\n", time_copy_file());
 }
