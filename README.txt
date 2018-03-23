@@ -21,9 +21,9 @@ Use dump to run our version of the dump command. By deafault it removes all file
 
 Use the "make exp" command to compile our experiment code. 
 
-Use exp to run our tests
+Use ./experiments to run our tests
 
-Use make clean to remove all .o and executible files
+Use make clean to remove all .o and executable files
 
 
 dv.c, dump.c, rm.c and experiments.c contain the code for their respective commands
