@@ -54,7 +54,6 @@ double time_rename() {
 	/* Run 20 renaming operations and collect the values */
 	int i; double sum = 0; char moved_file[] = "00.csv";
 	for(i = 1; i < 21; i++) {
-
 		test_file[0] = '0' + (i / 10); moved_file[0] = '0' + (i / 10);
 		test_file[1] = '0' + (i % 10); moved_file[1] = '0' + (i % 10);
     char* firstPath = build_path(2, testing_directory, test_file);
@@ -67,7 +66,9 @@ double time_rename() {
 
 		sync();
 		double end = get_time();
-		sum += (end - start);
+		double total = end - start;
+		printf("%f\n",total);
+		sum += (total);
 	}
 
 	teardown();
@@ -94,7 +95,9 @@ double time_link_unlink() {
 
 		sync();
 		double end = get_time();
-		sum += (end - start);
+		double total = end - start;
+		printf("%f\n",total);
+		sum += (total);
 	}
 
 	teardown();
